@@ -1,0 +1,37 @@
+types:
+  PlayerName: string
+  Cards: Card[]
+  PlayerData:
+    playerName: PlayerName
+  Color:
+    - RED
+    - BLUE
+    - BLACK
+    - YELLOW
+  PlayerInfo:
+    name: PlayerName
+    team: Color
+    isSpymaster: boolean
+  Card:
+    word: string
+    color?: Color
+    selected: boolean
+  PlayerState:
+    players: PlayerInfo[]
+    currentTurn: Color
+    cards: Cards
+
+methods:
+  createGame:
+  joinGame:
+  startGame:
+  giveClue:
+    hint: string
+    amount: number
+  selectCard:
+    word: string
+  endTurn:
+
+userState: PlayerState
+userData: PlayerData
+initialize: createGame
