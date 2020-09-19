@@ -12,17 +12,19 @@ import {
   Color,
   PlayerInfo,
   PlayerName,
+  GameStatus,
 } from "./.rtag/types";
 
 interface InternalState {
   players: PlayerInfo[];
   cards: Card[];
   currentTurn: Color;
+  gameStatus: GameStatus;
 }
 
 export class Impl implements Methods<InternalState> {
   createGame(userData: PlayerData, request: ICreateGameRequest): InternalState {
-    return { players: [createPlayer(userData.playerName)], cards: [], currentTurn: Color.RED };
+    return { players: [createPlayer(userData.playerName)], cards: [], currentTurn: Color.RED , gameStatus: GameStatus.IN_PROGRESS};
   }
   joinGame(state: InternalState, userData: PlayerData, request: IJoinGameRequest): string | void {
     if (state.players.find((player) => player.name == userData.playerName)) {
@@ -31,6 +33,9 @@ export class Impl implements Methods<InternalState> {
     state.players.push(createPlayer(userData.playerName));
   }
   startGame(state: InternalState, userData: PlayerData, request: IStartGameRequest): string | void {
+    if (state.cards.length > 0){
+      return "Game already in play";
+    }   
     // set up cards
     const shuffledList = shuffle(wordList);
     for (let i = 0; i < 25; i++) {
@@ -76,6 +81,18 @@ export class Impl implements Methods<InternalState> {
       return "Invalid card selection";
     }
     selectedCard.selected = true;
+    if (selectedCard.color == Color.BLACK){
+      state.gameStatus = player.team == Color.BLUE ? GameStatus.RED_WON : GameStatus.BLUE_WON;
+      state.currentTurn = Color.YELLOW;
+      return;
+    }
+
+    state.gameStatus = getNewGameStatus(state.cards);
+    if (state.gameStatus != GameStatus.IN_PROGRESS){ 
+      state.currentTurn = Color.YELLOW;
+      return;
+    }
+
     if (selectedCard.color != state.currentTurn) {
       state.currentTurn = nextTurn(state.currentTurn);
     }
@@ -96,6 +113,7 @@ export class Impl implements Methods<InternalState> {
       players: state.players,
       cards: state.cards.map((card) => sanitizeCard(card, player.isSpymaster)),
       currentTurn: state.currentTurn,
+      gameStatus: state.gameStatus,
     };
   }
 }
@@ -125,6 +143,28 @@ function sanitizeCard(card: Card, isSpymaster: boolean): Card {
     return card;
   }
   return { ...card, color: undefined };
+}
+
+function getNewGameStatus(cards: Card[]) : GameStatus{
+  let redUnselectedCards = 0;
+  let blueUnselectedCards = 0;
+  for (const card of cards){
+     if (!card.selected){
+       if (card.color == undefined){ continue;}
+
+       if (card.color == Color.RED) {++redUnselectedCards}
+       if (card.color == Color.BLUE) {++blueUnselectedCards}
+     }
+  }
+
+  if (redUnselectedCards == 0){
+    return GameStatus.RED_WON;
+  }
+  if (blueUnselectedCards == 0){
+   return GameStatus.BLUE_WON;
+  }
+
+  return GameStatus.IN_PROGRESS;
 }
 
 const wordList = [

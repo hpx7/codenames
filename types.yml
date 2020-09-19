@@ -16,10 +16,15 @@ types:
     word: string
     color?: Color
     selected: boolean
+  GameStatus:
+    - IN_PROGRESS
+    - RED_WON
+    - BLUE_WON
   PlayerState:
     players: PlayerInfo[]
     currentTurn: Color
     cards: Cards
+    gameStatus: GameStatus
 
 methods:
   createGame:
