@@ -17,16 +17,16 @@ import {
 
 interface InternalState {
   players: PlayerInfo[];
-  cards: Card[];
   currentTurn: Color;
+  cards: Card[];
 }
 
 export class Impl implements Methods<InternalState> {
   createGame(userData: PlayerData, request: ICreateGameRequest): InternalState {
     return {
       players: [createPlayer(userData.playerName)],
+      currentTurn: Color.YELLOW,
       cards: [],
-      currentTurn: Color.RED,
     };
   }
   joinGame(state: InternalState, userData: PlayerData, request: IJoinGameRequest): string | void {
@@ -39,11 +39,9 @@ export class Impl implements Methods<InternalState> {
     state.players.push(createPlayer(userData.playerName));
   }
   startGame(state: InternalState, userData: PlayerData, request: IStartGameRequest): string | void {
-    if (state.cards.length > 0) {
-      return "Game already started";
-    }
     // set up cards
     const shuffledList = shuffle(wordList);
+    state.cards = [];
     state.cards.push(...chooseCards(shuffledList, 9, Color.RED));
     state.cards.push(...chooseCards(shuffledList, 8, Color.BLUE));
     state.cards.push(...chooseCards(shuffledList, 7, Color.YELLOW));
@@ -53,16 +51,11 @@ export class Impl implements Methods<InternalState> {
     // set up teams
     state.players = shuffle(state.players);
     for (let i = 0; i < state.players.length; i++) {
-      if (i < state.players.length / 2) {
-        state.players[i].team = Color.RED;
-      } else {
-        state.players[i].team = Color.BLUE;
-      }
+      state.players[i].team = i * 2 < state.players.length ? Color.RED : Color.BLUE;
     }
-
-    // choose spymaster
     state.players[0].isSpymaster = true;
     state.players[state.players.length - 1].isSpymaster = true;
+    state.currentTurn = Color.RED;
   }
   giveClue(state: InternalState, userData: PlayerData, request: IGiveClueRequest): string | void {
     throw new Error("Method not implemented.");
@@ -105,11 +98,12 @@ export class Impl implements Methods<InternalState> {
   }
   getUserState(state: InternalState, userData: PlayerData): PlayerState {
     const player = state.players.find((player) => player.name == userData.playerName);
+    const gameStatus = getGameStatus(state.cards);
     return {
       players: state.players,
-      cards: player?.isSpymaster ? state.cards : state.cards.map(sanitizeCard),
+      gameStatus,
       currentTurn: state.currentTurn,
-      gameStatus: getGameStatus(state.cards),
+      cards: player?.isSpymaster || gameStatus != GameStatus.IN_PROGRESS ? state.cards : state.cards.map(sanitizeCard),
     };
   }
 }
@@ -119,7 +113,7 @@ function nextTurn(turn: Color): Color {
 }
 
 function createPlayer(name: PlayerName) {
-  return { name: name, team: Color.YELLOW, isSpymaster: false };
+  return { name, team: Color.YELLOW, isSpymaster: false };
 }
 
 function shuffle<T>(items: T[]) {
@@ -132,11 +126,7 @@ function shuffle<T>(items: T[]) {
 }
 
 function chooseCards(words: string[], num: number, color: Color) {
-  const cards = [];
-  for (let i = 0; i < num; i++) {
-    cards.push({ word: words.pop()!, color });
-  }
-  return cards;
+  return [...Array(num).keys()].map((_) => ({ word: words.pop()!, color }));
 }
 
 function sanitizeCard(card: Card): Card {

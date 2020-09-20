@@ -22,9 +22,9 @@ types:
     - BLUE_WON
   PlayerState:
     players: PlayerInfo[]
+    gameStatus: GameStatus
     currentTurn: Color
     cards: Cards
-    gameStatus: GameStatus
 
 methods:
   createGame:
