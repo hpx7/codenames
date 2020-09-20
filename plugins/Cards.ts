@@ -8,7 +8,7 @@ export default class CardsComponent extends LitElement {
   @property() client!: RtagClient;
 
   render() {
-    return html`<div class="grid-container">${this.val.map(this.renderCard)}</div>`;
+    return html`<div class="grid-container">${this.val.map((card) => this.renderCard(card))}</div>`;
   }
 
   renderCard(card: Card) {

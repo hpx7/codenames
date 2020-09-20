@@ -19,7 +19,6 @@ interface InternalState {
   players: PlayerInfo[];
   cards: Card[];
   currentTurn: Color;
-  gameStatus: GameStatus;
 }
 
 export class Impl implements Methods<InternalState> {
@@ -28,10 +27,12 @@ export class Impl implements Methods<InternalState> {
       players: [createPlayer(userData.playerName)],
       cards: [],
       currentTurn: Color.RED,
-      gameStatus: GameStatus.IN_PROGRESS,
     };
   }
   joinGame(state: InternalState, userData: PlayerData, request: IJoinGameRequest): string | void {
+    if (state.cards.length > 0) {
+      return "Game already started";
+    }
     if (state.players.find((player) => player.name == userData.playerName)) {
       return "Already joined";
     }
@@ -39,21 +40,14 @@ export class Impl implements Methods<InternalState> {
   }
   startGame(state: InternalState, userData: PlayerData, request: IStartGameRequest): string | void {
     if (state.cards.length > 0) {
-      return "Game already in play";
+      return "Game already started";
     }
     // set up cards
     const shuffledList = shuffle(wordList);
-    for (let i = 0; i < 25; i++) {
-      let color = Color.YELLOW;
-      if (i < 9) {
-        color = Color.RED;
-      } else if (i < 17) {
-        color = Color.BLUE;
-      } else if (i == 17) {
-        color = Color.BLACK;
-      }
-      state.cards.push({ word: shuffledList[i], color: color, selected: false });
-    }
+    state.cards.push(...chooseCards(shuffledList, 9, Color.RED));
+    state.cards.push(...chooseCards(shuffledList, 8, Color.BLUE));
+    state.cards.push(...chooseCards(shuffledList, 7, Color.YELLOW));
+    state.cards.push(...chooseCards(shuffledList, 1, Color.BLACK));
     state.cards = shuffle(state.cards);
 
     // set up teams
@@ -74,6 +68,9 @@ export class Impl implements Methods<InternalState> {
     throw new Error("Method not implemented.");
   }
   selectCard(state: InternalState, userData: PlayerData, request: ISelectCardRequest): string | void {
+    if (getGameStatus(state.cards) != GameStatus.IN_PROGRESS) {
+      return "Game is over";
+    }
     const player = state.players.find((player) => player.name == userData.playerName)!;
     if (player.isSpymaster) {
       return "Spymaster cannot select card";
@@ -85,27 +82,21 @@ export class Impl implements Methods<InternalState> {
     if (selectedCard == undefined) {
       return "Invalid card selection";
     }
-    selectedCard.selected = true;
-    if (selectedCard.color == Color.BLACK) {
-      state.gameStatus = player.team == Color.BLUE ? GameStatus.RED_WON : GameStatus.BLUE_WON;
-      state.currentTurn = Color.YELLOW;
-      return;
+    if (selectedCard.selectedBy != undefined) {
+      return "Card already selected";
     }
-
-    state.gameStatus = getNewGameStatus(state.cards);
-    if (state.gameStatus != GameStatus.IN_PROGRESS) {
-      state.currentTurn = Color.YELLOW;
-      return;
-    }
-
+    selectedCard.selectedBy = player.team;
     if (selectedCard.color != state.currentTurn) {
       state.currentTurn = nextTurn(state.currentTurn);
     }
   }
   endTurn(state: InternalState, userData: PlayerData, request: IEndTurnRequest): string | void {
+    if (getGameStatus(state.cards) != GameStatus.IN_PROGRESS) {
+      return "Game is over";
+    }
     const player = state.players.find((player) => player.name == userData.playerName)!;
     if (player.isSpymaster) {
-      return "Spymaster cannot select card";
+      return "Spymaster cannot end turn";
     }
     if (player.team != state.currentTurn) {
       return "Not your turn";
@@ -113,21 +104,18 @@ export class Impl implements Methods<InternalState> {
     state.currentTurn = nextTurn(state.currentTurn);
   }
   getUserState(state: InternalState, userData: PlayerData): PlayerState {
-    const player = state.players.find((player) => player.name == userData.playerName)!;
+    const player = state.players.find((player) => player.name == userData.playerName);
     return {
       players: state.players,
-      cards: state.cards.map((card) => sanitizeCard(card, player.isSpymaster)),
+      cards: player?.isSpymaster ? state.cards : state.cards.map(sanitizeCard),
       currentTurn: state.currentTurn,
-      gameStatus: state.gameStatus,
+      gameStatus: getGameStatus(state.cards),
     };
   }
 }
 
 function nextTurn(turn: Color): Color {
-  if (turn == Color.BLUE) {
-    return Color.RED;
-  }
-  return Color.BLUE;
+  return turn == Color.BLUE ? Color.RED : Color.BLUE;
 }
 
 function createPlayer(name: PlayerName) {
@@ -143,39 +131,34 @@ function shuffle<T>(items: T[]) {
   return shuffled;
 }
 
-function sanitizeCard(card: Card, isSpymaster: boolean): Card {
-  if (isSpymaster || card.selected) {
-    return card;
+function chooseCards(words: string[], num: number, color: Color) {
+  const cards = [];
+  for (let i = 0; i < num; i++) {
+    cards.push({ word: words.pop()!, color });
   }
-  return { ...card, color: undefined };
+  return cards;
 }
 
-function getNewGameStatus(cards: Card[]): GameStatus {
-  let redUnselectedCards = 0;
-  let blueUnselectedCards = 0;
-  for (const card of cards) {
-    if (!card.selected) {
-      if (card.color == undefined) {
-        continue;
-      }
+function sanitizeCard(card: Card): Card {
+  return card.selectedBy != undefined ? card : { ...card, color: undefined };
+}
 
-      if (card.color == Color.RED) {
-        ++redUnselectedCards;
-      }
-      if (card.color == Color.BLUE) {
-        ++blueUnselectedCards;
-      }
+function getGameStatus(cards: Card[]): GameStatus {
+  const blackCard = cards.find((card) => card.color == Color.BLACK);
+  if (blackCard != undefined) {
+    if (blackCard.selectedBy != undefined) {
+      return blackCard.selectedBy == Color.BLUE ? GameStatus.RED_WON : GameStatus.BLUE_WON;
+    } else if (remainingCards(cards, Color.BLUE) == 0) {
+      return GameStatus.BLUE_WON;
+    } else if (remainingCards(cards, Color.RED) == 0) {
+      return GameStatus.RED_WON;
     }
   }
-
-  if (redUnselectedCards == 0) {
-    return GameStatus.RED_WON;
-  }
-  if (blueUnselectedCards == 0) {
-    return GameStatus.BLUE_WON;
-  }
-
   return GameStatus.IN_PROGRESS;
+}
+
+function remainingCards(cards: Card[], color: Color): number {
+  return cards.filter((card) => card.selectedBy == undefined && card.color == color).length;
 }
 
 const wordList = [

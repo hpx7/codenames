@@ -15,7 +15,7 @@ types:
   Card:
     word: string
     color?: Color
-    selected: boolean
+    selectedBy?: Color
   GameStatus:
     - IN_PROGRESS
     - RED_WON
