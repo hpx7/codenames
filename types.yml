@@ -21,10 +21,17 @@ types:
     - IN_PROGRESS
     - RED_WON
     - BLUE_WON
+  TurnInfo:
+    hint: string
+    amount: number
+    guessed: number
   PlayerState:
     players: PlayerInfo[]
     gameStatus: GameStatus
     currentTurn: Color
+    turnInfo?: TurnInfo
+    redRemaining: number
+    blueRemaining: number
     cards: Cards
 
 methods:
