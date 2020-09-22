@@ -127,12 +127,10 @@ function createPlayer(name: PlayerName) {
 function getGameStatus(cards: Card[]): GameStatus {
   const blackCard = cards.find((card) => card.color == Color.BLACK);
   if (blackCard != undefined) {
-    if (blackCard.selectedBy != undefined) {
-      return blackCard.selectedBy == Color.BLUE ? GameStatus.RED_WON : GameStatus.BLUE_WON;
-    } else if (remainingCards(cards, Color.BLUE) == 0) {
-      return GameStatus.BLUE_WON;
-    } else if (remainingCards(cards, Color.RED) == 0) {
+    if (blackCard.selectedBy == Color.BLUE || remainingCards(cards, Color.RED) == 0) {
       return GameStatus.RED_WON;
+    } else if (blackCard.selectedBy == Color.RED || remainingCards(cards, Color.BLUE) == 0) {
+      return GameStatus.BLUE_WON;
     }
   }
   return GameStatus.IN_PROGRESS;
