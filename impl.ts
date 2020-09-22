@@ -40,6 +40,10 @@ export class Impl implements Methods<InternalState> {
     state.players.push(createPlayer(userData.playerName));
   }
   startGame(state: InternalState, userData: PlayerData, request: IStartGameRequest): string | void {
+    if (getGameStatus(state.cards) == GameStatus.IN_PROGRESS) {
+      return "Game is in progress";
+    }
+
     // set up cards
     const shuffledList = shuffle(wordList);
     state.cards = [];
@@ -65,7 +69,10 @@ export class Impl implements Methods<InternalState> {
     if (getGameStatus(state.cards) != GameStatus.IN_PROGRESS) {
       return "Game is over";
     }
-    const player = state.players.find((player) => player.name == userData.playerName)!;
+    const player = state.players.find((player) => player.name == userData.playerName);
+    if (player == undefined) {
+      return "Invalid player";
+    }
     if (player.isSpymaster) {
       return "Spymaster cannot select card";
     }
@@ -88,7 +95,10 @@ export class Impl implements Methods<InternalState> {
     if (getGameStatus(state.cards) != GameStatus.IN_PROGRESS) {
       return "Game is over";
     }
-    const player = state.players.find((player) => player.name == userData.playerName)!;
+    const player = state.players.find((player) => player.name == userData.playerName);
+    if (player == undefined) {
+      return "Invalid player";
+    }
     if (player.isSpymaster) {
       return "Spymaster cannot end turn";
     }
