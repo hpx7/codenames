@@ -15,6 +15,7 @@ import {
   GameStatus,
 } from "./.rtag/types";
 import { wordList } from "./words";
+import { shuffle } from "./utils";
 
 interface InternalState {
   players: PlayerInfo[];
@@ -119,29 +120,8 @@ export class Impl implements Methods<InternalState> {
   }
 }
 
-function nextTurn(turn: Color): Color {
-  return turn == Color.BLUE ? Color.RED : Color.BLUE;
-}
-
 function createPlayer(name: PlayerName) {
   return { name, team: Color.YELLOW, isSpymaster: false };
-}
-
-function shuffle<T>(items: T[]) {
-  const shuffled = [...items];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-function chooseCards(words: string[], num: number, color: Color) {
-  return [...Array(num).keys()].map((_) => ({ word: words.pop()!, color }));
-}
-
-function sanitizeCard(card: Card): Card {
-  return card.selectedBy != undefined ? card : { ...card, color: undefined };
 }
 
 function getGameStatus(cards: Card[]): GameStatus {
@@ -156,6 +136,18 @@ function getGameStatus(cards: Card[]): GameStatus {
     }
   }
   return GameStatus.IN_PROGRESS;
+}
+
+function chooseCards(words: string[], num: number, color: Color) {
+  return [...Array(num).keys()].map((_) => ({ word: words.pop()!, color }));
+}
+
+function nextTurn(turn: Color): Color {
+  return turn == Color.BLUE ? Color.RED : Color.BLUE;
+}
+
+function sanitizeCard(card: Card): Card {
+  return card.selectedBy != undefined ? card : { ...card, color: undefined };
 }
 
 function remainingCards(cards: Card[], color: Color): number {
