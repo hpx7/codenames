@@ -17,6 +17,7 @@ types:
     color?: Color
     selectedBy?: Color
   GameStatus:
+    - NOT_STARTED
     - IN_PROGRESS
     - RED_WON
     - BLUE_WON

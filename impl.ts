@@ -32,7 +32,7 @@ export class Impl implements Methods<InternalState> {
     };
   }
   joinGame(state: InternalState, userData: PlayerData, request: IJoinGameRequest): string | void {
-    if (state.cards.length > 0) {
+    if (getGameStatus(state.cards) != GameStatus.NOT_STARTED) {
       return "Game already started";
     }
     if (state.players.find((player) => player.name == userData.playerName)) {
@@ -126,12 +126,13 @@ function createPlayer(name: PlayerName) {
 
 function getGameStatus(cards: Card[]): GameStatus {
   const blackCard = cards.find((card) => card.color == Color.BLACK);
-  if (blackCard != undefined) {
-    if (blackCard.selectedBy == Color.BLUE || remainingCards(cards, Color.RED) == 0) {
-      return GameStatus.RED_WON;
-    } else if (blackCard.selectedBy == Color.RED || remainingCards(cards, Color.BLUE) == 0) {
-      return GameStatus.BLUE_WON;
-    }
+  if (blackCard == undefined){
+    return GameStatus.NOT_STARTED;
+  }
+  if (blackCard.selectedBy == Color.BLUE || remainingCards(cards, Color.RED) == 0) {
+    return GameStatus.RED_WON;
+  } else if (blackCard.selectedBy == Color.RED || remainingCards(cards, Color.BLUE) == 0) {
+    return GameStatus.BLUE_WON;
   }
   return GameStatus.IN_PROGRESS;
 }
