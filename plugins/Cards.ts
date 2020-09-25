@@ -20,7 +20,8 @@ export default class CardsComponent extends LitElement {
         lineHeight: "75px",
         textAlign: "center",
         cursor: "pointer",
-        backgroundColor: card.color != undefined ? Color[card.color].toLowerCase() : "grey",
+        border: card.selectedBy != undefined ? "5px solid purple" : "5px solid " + this.getColor(card),
+        backgroundColor: this.getColor(card),
       })}
       @click="${() =>
         this.client.selectCard({ word: card.word }, (error) => {
@@ -33,6 +34,10 @@ export default class CardsComponent extends LitElement {
     </div>`;
   }
 
+  getColor(card: Card){
+    return card.color != undefined ? Color[card.color].toLowerCase() : "grey";
+  }
+
   static get styles() {
     return css`
       .grid-container {
@@ -41,7 +46,7 @@ export default class CardsComponent extends LitElement {
       }
       .grid-item {
         margin: 10px;
-        border: 1px solid #4caf50;
+        font-weight: 900;
       }
     `;
   }
