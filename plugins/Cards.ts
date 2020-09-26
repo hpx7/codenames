@@ -15,13 +15,14 @@ export default class CardsComponent extends LitElement {
     return html`<div
       class="grid-item"
       style=${styleMap({
-        width: "125px",
-        height: "75px",
+        width: "115px",
+        height: "65px",
         lineHeight: "75px",
         textAlign: "center",
         cursor: "pointer",
-        border: card.selectedBy != undefined ? "5px solid purple" : "5px solid " + this.getColor(card),
-        backgroundColor: this.getColor(card),
+        outline: card.selectedBy != undefined ? "3px solid " + Color[card.selectedBy].toLowerCase() : "3px solid " + this.getCardColor(card),
+        border:  card.selectedBy != undefined ? "5px solid black" : "5px solid " + this.getCardColor(card),
+        backgroundColor: this.getCardColor(card),
       })}
       @click="${() =>
         this.client.selectCard({ word: card.word }, (error) => {
@@ -34,7 +35,7 @@ export default class CardsComponent extends LitElement {
     </div>`;
   }
 
-  getColor(card: Card){
+  getCardColor(card: Card){
     return card.color != undefined ? Color[card.color].toLowerCase() : "grey";
   }
 
