@@ -17,6 +17,7 @@ import {
 } from "./.rtag/types";
 import { wordList } from "./words";
 import { shuffle } from "./utils";
+import { Stats } from "fs";
 
 interface InternalState {
   players: PlayerInfo[];
@@ -60,6 +61,7 @@ export class Impl implements Methods<InternalState> {
     state.cards = shuffle(state.cards);
 
     // set up teams
+    state.players = state.players.map((player) => createPlayer(player.name));
     state.players = shuffle(state.players);
     for (let i = 0; i < state.players.length; i++) {
       state.players[i].team = i * 2 < state.players.length ? Color.RED : Color.BLUE;
