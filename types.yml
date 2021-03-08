@@ -1,8 +1,6 @@
 types:
   PlayerName: string
   Cards: Card[]
-  PlayerData:
-    playerName: PlayerName
   Color:
     - RED
     - BLUE
@@ -45,6 +43,11 @@ methods:
     word: string
   endTurn:
 
+auth:
+  anonymous:
+    separator: "-"
+  google:
+    clientId: 848412826788-m4msrb6q44dm2ue3kgvui0fq7kda55ls.apps.googleusercontent.com
+
 userState: PlayerState
-userData: PlayerData
 initialize: createGame

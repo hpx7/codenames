@@ -1,6 +1,6 @@
 import { Methods } from "./.rtag/methods";
 import {
-  PlayerData,
+  UserData,
   ICreateGameRequest,
   IJoinGameRequest,
   IStartGameRequest,
@@ -17,7 +17,6 @@ import {
 } from "./.rtag/types";
 import { wordList } from "./words";
 import { shuffle } from "./utils";
-import { Stats } from "fs";
 
 interface InternalState {
   players: PlayerInfo[];
@@ -27,23 +26,23 @@ interface InternalState {
 }
 
 export class Impl implements Methods<InternalState> {
-  createGame(userData: PlayerData, request: ICreateGameRequest): InternalState {
+  createGame(userData: UserData, request: ICreateGameRequest): InternalState {
     return {
-      players: [createPlayer(userData.playerName)],
+      players: [createPlayer(userData.name)],
       currentTurn: Color.YELLOW,
       cards: [],
     };
   }
-  joinGame(state: InternalState, userData: PlayerData, request: IJoinGameRequest): string | void {
+  joinGame(state: InternalState, userData: UserData, request: IJoinGameRequest): string | void {
     if (getGameStatus(state.cards) != GameStatus.NOT_STARTED) {
       return "Game already started";
     }
-    if (state.players.find((player) => player.name == userData.playerName)) {
+    if (state.players.find((player) => player.name == userData.name)) {
       return "Already joined";
     }
-    state.players.push(createPlayer(userData.playerName));
+    state.players.push(createPlayer(userData.name));
   }
-  startGame(state: InternalState, userData: PlayerData, request: IStartGameRequest): string | void {
+  startGame(state: InternalState, userData: UserData, request: IStartGameRequest): string | void {
     if (getGameStatus(state.cards) == GameStatus.IN_PROGRESS) {
       return "Game is in progress";
     }
@@ -70,11 +69,11 @@ export class Impl implements Methods<InternalState> {
     state.players[state.players.length - 1].isSpymaster = true;
     state.currentTurn = Color.RED;
   }
-  giveClue(state: InternalState, userData: PlayerData, request: IGiveClueRequest): string | void {
+  giveClue(state: InternalState, userData: UserData, request: IGiveClueRequest): string | void {
     if (getGameStatus(state.cards) != GameStatus.IN_PROGRESS) {
       return "Game is over";
     }
-    const player = state.players.find((player) => player.name == userData.playerName);
+    const player = state.players.find((player) => player.name == userData.name);
     if (player == undefined) {
       return "Invalid player";
     }
@@ -86,11 +85,11 @@ export class Impl implements Methods<InternalState> {
     }
     state.turnInfo = { hint: request.hint, amount: request.amount, guessed: 0 };
   }
-  selectCard(state: InternalState, userData: PlayerData, request: ISelectCardRequest): string | void {
+  selectCard(state: InternalState, userData: UserData, request: ISelectCardRequest): string | void {
     if (getGameStatus(state.cards) != GameStatus.IN_PROGRESS) {
       return "Game is over";
     }
-    const player = state.players.find((player) => player.name == userData.playerName);
+    const player = state.players.find((player) => player.name == userData.name);
     if (player == undefined) {
       return "Invalid player";
     }
@@ -117,11 +116,11 @@ export class Impl implements Methods<InternalState> {
       state.turnInfo = undefined;
     }
   }
-  endTurn(state: InternalState, userData: PlayerData, request: IEndTurnRequest): string | void {
+  endTurn(state: InternalState, userData: UserData, request: IEndTurnRequest): string | void {
     if (getGameStatus(state.cards) != GameStatus.IN_PROGRESS) {
       return "Game is over";
     }
-    const player = state.players.find((player) => player.name == userData.playerName);
+    const player = state.players.find((player) => player.name == userData.name);
     if (player == undefined) {
       return "Invalid player";
     }
@@ -134,8 +133,8 @@ export class Impl implements Methods<InternalState> {
     state.currentTurn = nextTurn(state.currentTurn);
     state.turnInfo = undefined;
   }
-  getUserState(state: InternalState, userData: PlayerData): PlayerState {
-    const player = state.players.find((player) => player.name == userData.playerName);
+  getUserState(state: InternalState, userData: UserData): PlayerState {
+    const player = state.players.find((player) => player.name == userData.name);
     const gameStatus = getGameStatus(state.cards);
     return {
       players: state.players,
@@ -166,8 +165,8 @@ function getGameStatus(cards: Card[]): GameStatus {
   return GameStatus.IN_PROGRESS;
 }
 
-function chooseCards(words: string[], num: number, color: Color) {
-  return [...Array(num).keys()].map((_) => ({ word: words.pop()!, color }));
+function chooseCards(words: string[], num: number, color: Color): Card[] {
+  return [...Array(num).keys()].map((_) => ({ word: words.pop()!, color, selectedBy: undefined }));
 }
 
 function nextTurn(turn: Color): Color {
