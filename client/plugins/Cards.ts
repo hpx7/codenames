@@ -27,12 +27,12 @@ export default class CardsComponent extends LitElement {
         border: card.selectedBy != undefined ? "5px solid black" : "5px solid " + this.getCardColor(card),
         backgroundColor: this.getCardColor(card),
       })}
-      @click="${() =>
-        this.client.selectCard({ word: card.word }, (error) => {
-          if (error) {
-            this.dispatchEvent(new CustomEvent("error", { detail: error }));
-          }
-        })}"
+      @click="${async () => {
+        const res = await this.client.selectCard({ word: card.word });
+        if (res.type === "error") {
+          this.dispatchEvent(new CustomEvent("error", { detail: res.error }));
+        }
+      }}"
     >
       ${card.word}
     </div>`;
