@@ -15,17 +15,9 @@ export default class CardsComponent extends LitElement {
     return html`<div
       class="grid-item"
       style=${styleMap({
-        width: "115px",
-        height: "65px",
-        lineHeight: "75px",
-        textAlign: "center",
-        cursor: "pointer",
-        outline:
-          card.selectedBy != undefined
-            ? "3px solid " + Color[card.selectedBy].toLowerCase()
-            : "3px solid " + this.getCardColor(card),
-        border: card.selectedBy != undefined ? "5px solid black" : "5px solid " + this.getCardColor(card),
-        backgroundColor: this.getCardColor(card),
+        outline: "3px solid " + (isSelected(card) ? Color[card.selectedBy!].toLowerCase() : getCardColor(card)),
+        border: "5px solid " + (isSelected(card) ? "black" : getCardColor(card)),
+        backgroundColor: getCardColor(card),
       })}
       @click="${async () => {
         const res = await this.client.selectCard({ word: card.word });
@@ -38,10 +30,6 @@ export default class CardsComponent extends LitElement {
     </div>`;
   }
 
-  getCardColor(card: Card) {
-    return card.color != undefined ? Color[card.color].toLowerCase() : "grey";
-  }
-
   static get styles() {
     return css`
       .grid-container {
@@ -51,7 +39,20 @@ export default class CardsComponent extends LitElement {
       .grid-item {
         margin: 10px;
         font-weight: 900;
+        width: 115px;
+        height: 65px;
+        lineHeight: 75px;
+        textAlign: center;
+        cursor: pointer;
       }
     `;
   }
+}
+
+function getCardColor(card: Card) {
+  return card.color !== undefined && card.color !== null ? Color[card.color].toLowerCase() : "grey";
+}
+
+function isSelected(card: Card) {
+  return card.selectedBy !== undefined && card.selectedBy !== null;
 }
