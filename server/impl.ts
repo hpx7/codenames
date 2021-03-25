@@ -135,6 +135,9 @@ export class Impl implements Methods<InternalState> {
     if (player.team !== state.currentTurn) {
       return Result.error("Not your turn");
     }
+    if (state.turnInfo === undefined) {
+      return Result.error("Spymaster has not yet given clue");
+    }
     state.currentTurn = nextTurn(state.currentTurn);
     state.turnInfo = undefined;
     return Result.success();
