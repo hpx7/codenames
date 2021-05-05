@@ -16,14 +16,14 @@ export default class CardsComponent extends LitElement {
     return html`<div
       class="grid-item"
       style=${styleMap({
-        outline: "3px solid " + (card.selectedBy !== undefined ? Color[card.selectedBy!].toLowerCase() : cardColor),
+        outline: "3px solid " + (card.selectedBy !== undefined ? Color[card.selectedBy].toLowerCase() : cardColor),
         border: "5px solid " + (card.selectedBy !== undefined ? "black" : cardColor),
         backgroundColor: cardColor,
       })}
       @click="${async () => {
         const res = await this.client.selectCard({ word: card.word });
-        if (res.type === "error") {
-          this.dispatchEvent(new CustomEvent("error", { detail: res.error }));
+        if (res !== undefined) {
+          this.dispatchEvent(new CustomEvent("error", { detail: res }));
         }
       }}"
     >
